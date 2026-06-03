@@ -1,0 +1,34 @@
+name: Daily Market Scrape
+
+on:
+  schedule:
+    - cron: "0 2 * * *"  # Daily at 2am UTC
+  workflow_dispatch: {}
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Scrape Chrono24
+        run: npx tsx scripts/scrapers/chrono24.ts
+        continue-on-error: true
+
+      - name: Scrape Bob's Watches
+        run: npx tsx scripts/scrapers/bobs.ts
+        continue-on-error: true
+
+      - name: Scrape Reddit AD Signals
+        run: npx tsx scripts/scrapers/reddit.ts
+        continue-on-error: true
